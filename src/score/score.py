@@ -4,7 +4,8 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 from azureml.core.model import Model
 from PIL import Image
-from applicationinsights import TelemetryClient
+from azureml.monitoring import ModelDataCollector
+from azureml.core.webservice import Webservice, AciWebservice, AksWebservice
 
 
 class CNN(nn.Module):
@@ -32,6 +33,11 @@ class CNN(nn.Module):
 
 def init():
     global model
+    global inputs_dc, prediction_dc
+
+    inputs_dc = ModelDataCollector("torchcnn", identifier="inputs")
+    prediction_dc = ModelDataCollector("torchcnn", identifier="predictions")
+
     model = CNN()
     # The line below loads the model from the AML Service
     model_path = Model.get_model_path(model_name="torchcnn")
@@ -42,9 +48,6 @@ def init():
 
 
 def run(raw_data):
-    tc = TelemetryClient('148035a0-374e-43bf-a25f-bd2b919e0ad2')
-    tc.track_event('odaibert/riserrad - Test Event initiated', properties=None)
-    tc.flush()
     transform = transforms.transforms.Compose([
         transforms.transforms.ToTensor(),
         transforms.transforms.Normalize(
@@ -53,11 +56,15 @@ def run(raw_data):
     img = Image.frombytes(
         '1', (28, 28), str(json.loads(json.dumps(raw_data))['data']).encode())
     input_data = transform(img)
+
+    inputs_dc.collect(input_data)
+
     input_data = input_data.unsqueeze(0)
     classes = ['tshirt', 'Trouser', 'Pullover', 'Dress', 'Coat',
                'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
     output = model(input_data)
+
+    prediction_dc.collect(output)
+
     index = torch.argmax(output, 1)
-    tc.track_event('odaibert/riserrad - Output test', properties={'result': classes[index]})
-    tc.flush()
     return classes[index]
