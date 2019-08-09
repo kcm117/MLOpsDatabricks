@@ -5,7 +5,6 @@ import torchvision.transforms as transforms
 from azureml.core.model import Model
 from PIL import Image
 from azureml.monitoring import ModelDataCollector
-from azureml.core.webservice import Webservice, AciWebservice, AksWebservice
 
 
 class CNN(nn.Module):
