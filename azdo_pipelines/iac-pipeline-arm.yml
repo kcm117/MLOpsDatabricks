@@ -23,7 +23,7 @@ steps:
   inputs:
     azureSubscription: $(azuresub)
     action: 'Create Or Update Resource Group'
-    resourceGroupName: '$(baseName)-AML-RG'
+    resourceGroupName: 'mlops-AML-RG'
     location: $(location)
     templateLocation: 'Linked artifact'
     csmFile: '$(Build.SourcesDirectory)/iac/arm-templates/cloud-environment.json'
